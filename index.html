@@ -53,7 +53,7 @@
     <!-- Auth Screen -->
     <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 p-4">
         <div class="text-center">
-            <h1 class="text-4xl font-bold text-white mb-4">Welcome to The Ascent Protocol</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold text-white mb-4">Welcome to The Ascent Protocol</h1>
             <p id="auth-status" class="text-gray-400 mb-8">Connecting to server...</p>
             <div id="auth-spinner" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto"></div>
             <div id="auth-error-message" class="hidden"></div>
@@ -68,10 +68,10 @@
                 <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">The Ascent Protocol</h1>
                 <p class="text-gray-400 mt-2">Your 90-Day Gamified Sprint to a Target Role</p>
             </div>
-            <div class="flex items-center space-x-4 mt-4 sm:mt-0">
-                <div id="skill-points-display" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Skill Points: 0</div>
-                <button id="skill-tree-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">View Skill Tree</button>
-                <button id="reset-progress-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Reset Progress</button>
+            <div class="flex items-center space-x-2 sm:space-x-4 mt-4 sm:mt-0">
+                <div id="skill-points-display" class="bg-gray-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-sm sm:text-base">Skill Points: 0</div>
+                <button id="skill-tree-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm sm:text-base">Skill Tree</button>
+                <button id="reset-progress-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm sm:text-base">Reset</button>
             </div>
         </header>
 
@@ -176,8 +176,13 @@
                 <h3 class="text-2xl font-bold text-white">Skill Constellation</h3>
                 <button id="skill-tree-close-btn" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
             </div>
-            <div id="skill-tree-container" class="p-6 flex-grow overflow-auto relative">
-                <svg id="skill-lines-svg" class="absolute top-0 left-0 w-full h-full pointer-events-none"></svg>
+            <div id="skill-tree-container" class="p-6 flex-grow overflow-auto">
+                 <!-- Mobile view: vertical list -->
+                <div id="skill-tree-mobile" class="md:hidden space-y-4"></div>
+                <!-- Desktop view: radial layout -->
+                <div id="skill-tree-desktop" class="hidden md:block relative w-full h-full">
+                    <svg id="skill-lines-svg" class="absolute top-0 left-0 w-full h-full pointer-events-none"></svg>
+                </div>
             </div>
         </div>
     </div>
@@ -275,6 +280,7 @@
             modalCancelBtn: document.getElementById('modal-cancel-btn'), resetProgressBtn: document.getElementById('reset-progress-btn'),
             achievementsList: document.getElementById('achievements-list'), skillTreeBtn: document.getElementById('skill-tree-btn'),
             skillTreeModal: document.getElementById('skill-tree-modal'), skillTreeContainer: document.getElementById('skill-tree-container'),
+            skillTreeDesktop: document.getElementById('skill-tree-desktop'), skillTreeMobile: document.getElementById('skill-tree-mobile'),
             skillTreeCloseBtn: document.getElementById('skill-tree-close-btn'), toast: document.getElementById('toast-notification'), toastText: document.getElementById('toast-text'),
             skillLinesSvg: document.getElementById('skill-lines-svg'), skillPointsDisplay: document.getElementById('skill-points-display'),
             generateStarBtn: document.getElementById('generate-star-btn'), starInput: document.getElementById('star-input'), starOutput: document.getElementById('star-output'),
@@ -444,8 +450,12 @@
         }
 
         function renderSkillTree() {
-            const container = ui.skillTreeContainer;
-            container.innerHTML = ''; // Clear previous
+            const desktopContainer = ui.skillTreeDesktop;
+            const mobileContainer = ui.skillTreeMobile;
+            desktopContainer.innerHTML = '';
+            mobileContainer.innerHTML = '';
+
+            // Desktop Radial Layout
             Object.values(skillTreeData).forEach(skill => {
                 const isUnlocked = playerState.unlockedSkills.includes(skill.id);
                 const dependenciesMet = skill.dependencies.every(dep => playerState.unlockedSkills.includes(dep));
@@ -471,13 +481,43 @@
                 } else if (!isUnlocked && !dependenciesMet) {
                     node.title = `Requires: ${skill.dependencies.map(d => skillTreeData[d].name).join(', ')}`;
                 }
-                container.appendChild(node);
+                desktopContainer.appendChild(node);
+            });
+
+            // Mobile Vertical List Layout
+            Object.values(skillTreeData).forEach(skill => {
+                 if (skill.id === 'core') return; // Don't show core in list
+                 const isUnlocked = playerState.unlockedSkills.includes(skill.id);
+                 const dependenciesMet = skill.dependencies.every(dep => playerState.unlockedSkills.includes(dep));
+                 const isUnlockable = !isUnlocked && dependenciesMet && playerState.skillPoints > 0;
+
+                 const node = document.createElement('div');
+                 node.className = `p-4 rounded-lg flex items-center justify-between border-2 ${isUnlocked ? 'unlocked' : 'border-gray-600'} ${!isUnlocked ? 'locked' : ''}`;
+                 
+                 node.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <svg class="w-8 h-8 ${isUnlocked ? 'text-green-400' : 'text-gray-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${skill.icon}"></path></svg>
+                        <div>
+                            <p class="font-bold">${skill.name}</p>
+                            <p class="text-xs text-gray-400">Requires: ${skill.dependencies.map(d => skillTreeData[d].name).join(', ')}</p>
+                        </div>
+                    </div>
+                 `;
+
+                 if (isUnlockable) {
+                     const unlockBtn = document.createElement('button');
+                     unlockBtn.className = 'bg-yellow-500 text-black font-bold py-1 px-3 rounded-md text-sm';
+                     unlockBtn.textContent = 'Unlock';
+                     unlockBtn.dataset.skillId = skill.id;
+                     node.appendChild(unlockBtn);
+                 }
+                 mobileContainer.appendChild(node);
             });
 
             setTimeout(() => {
                 const svg = ui.skillLinesSvg;
                 svg.innerHTML = ''; // Clear lines
-                const containerRect = container.getBoundingClientRect();
+                const containerRect = desktopContainer.getBoundingClientRect();
                 Object.values(skillTreeData).forEach(skill => {
                     skill.dependencies.forEach(depId => {
                         const parentNode = document.getElementById(`skill-${depId}`);
@@ -536,7 +576,6 @@
                 playerState.unlockedSkills.push(skillId);
                 showToast(`Unlocked: ${skill.name}!`);
                 
-                // Automatically generate missions for the new skill
                 automaticallyGenerateMissions(skillId, skill.name);
                 
                 savePlayerStateToDb();
@@ -769,9 +808,12 @@
         ui.skillTreeBtn.addEventListener('click', () => { ui.skillTreeModal.classList.remove('hidden'); renderSkillTree(); });
         ui.skillTreeCloseBtn.addEventListener('click', () => ui.skillTreeModal.classList.add('hidden'));
         ui.skillTreeContainer.addEventListener('click', (e) => {
-            const node = e.target.closest('.skill-node');
-            if (node && node.classList.contains('unlockable')) {
-                unlockSkill(node.dataset.skillId);
+            const node = e.target.closest('.skill-node, .bg-yellow-500');
+            if (node) {
+                const skillId = node.dataset.skillId;
+                if (skillId && (node.classList.contains('unlockable') || node.tagName === 'BUTTON')) {
+                     unlockSkill(skillId);
+                }
             }
         });
         ui.generateStarBtn.addEventListener('click', async () => {
