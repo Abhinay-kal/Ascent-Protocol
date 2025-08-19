@@ -24,13 +24,13 @@
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
         
         /* Skill Tree Styles */
-        .skill-node { transition: all 0.2s ease; position: absolute; background-color: #1f2937; border: 2px solid #4b5563; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; cursor: pointer; }
+        .skill-node { transition: all 0.2s ease; position: absolute; background-color: #1f2937; border: 2px solid #4b5563; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; cursor: pointer; padding: 2px; }
         .skill-node.locked { filter: grayscale(80%) brightness(0.7); cursor: not-allowed; }
-        .skill-node.unlockable { border-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.7); animation: pulse-yellow 2s infinite; }
-        @keyframes pulse-yellow { 0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.7); } 50% { box-shadow: 0 0 25px rgba(252, 211, 77, 1); } }
+        .skill-node.unlockable { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.7); animation: pulse-yellow 2s infinite; }
+        @keyframes pulse-yellow { 0%, 100% { box-shadow: 0 0 12px rgba(245, 158, 11, 0.7); } 50% { box-shadow: 0 0 20px rgba(252, 211, 77, 1); } }
         .skill-node.unlocked { border-color: #10b981; }
-        .skill-node .skill-name { font-size: 10px; font-weight: bold; }
-        .skill-node .skill-icon { width: 24px; height: 24px; }
+        .skill-node .skill-name { font-size: 9px; font-weight: bold; line-height: 1.1; }
+        .skill-node .skill-icon { width: 20px; height: 20px; margin-bottom: 2px; }
         .skill-line { stroke: #4b5563; stroke-width: 2; }
         .skill-line.unlocked { stroke: #10b981; }
         
@@ -468,8 +468,8 @@
                 else if (isUnlockable) node.classList.add('unlockable');
                 else node.classList.add('locked');
                 
-                node.style.left = `calc(${skill.x} - 40px)`;
-                node.style.top = `calc(${skill.y} - 40px)`;
+                node.style.left = `calc(${skill.x} - 32px)`;
+                node.style.top = `calc(${skill.y} - 32px)`;
                 node.dataset.skillId = skill.id;
 
                 node.innerHTML = `
@@ -492,13 +492,13 @@
                  const isUnlockable = !isUnlocked && dependenciesMet && playerState.skillPoints > 0;
 
                  const node = document.createElement('div');
-                 node.className = `p-4 rounded-lg flex items-center justify-between border-2 ${isUnlocked ? 'unlocked' : 'border-gray-600'} ${!isUnlocked ? 'locked' : ''}`;
+                 node.className = `p-3 rounded-lg flex items-center justify-between border-2 ${isUnlocked ? 'unlocked' : 'border-gray-600'} ${!isUnlocked ? 'locked' : ''}`;
                  
                  node.innerHTML = `
-                    <div class="flex items-center space-x-4">
-                        <svg class="w-8 h-8 ${isUnlocked ? 'text-green-400' : 'text-gray-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${skill.icon}"></path></svg>
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-6 h-6 ${isUnlocked ? 'text-green-400' : 'text-gray-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${skill.icon}"></path></svg>
                         <div>
-                            <p class="font-bold">${skill.name}</p>
+                            <p class="font-bold text-sm">${skill.name}</p>
                             <p class="text-xs text-gray-400">Requires: ${skill.dependencies.map(d => skillTreeData[d].name).join(', ')}</p>
                         </div>
                     </div>
